@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: conector-journey
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn conector:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: LANGFLOW_BASE_URL
+        sync: false
+      - key: LANGFLOW_FIXED_FLOW_ID
+        sync: false
+      - key: LANGFLOW_FIXED_API_KEY
+        sync: false

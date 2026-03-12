@@ -72,4 +72,5 @@ def conector_dynamic(flow_id: str, apikey: str, payload: dict):
 
 
 if __name__ == "__main__":
-    uvicorn.run("conector:app", host="0.0.0.0", port=8000, reload=True)
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("conector:app", host="0.0.0.0", port=port)
