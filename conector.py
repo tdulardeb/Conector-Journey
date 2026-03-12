@@ -80,10 +80,6 @@ def crm_customer(payload: dict):
 def health():
     return {"status": "ok"}
 
-@app.get("/conector/health/v2")
-def health():
-    return {"status": "ok"}
-
 @app.post("/conector/{flow_id}/{apikey}")
 def conector_dynamic(flow_id: str, apikey: str, payload: dict):
     url = f"{LANGFLOW_BASE_URL}/{flow_id}"
