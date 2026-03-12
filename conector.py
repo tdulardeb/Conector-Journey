@@ -39,7 +39,20 @@ def _call_langflow(flow_url: str, api_key: str, payload: dict) -> JSONResponse:
 
     if resp.status_code >= 400:
         raise HTTPException(status_code=resp.status_code, detail=resp.text)
-    data = resp.json()
+
+    if not resp.text.strip():
+        raise HTTPException(
+            status_code=502,
+            detail=f"Langflow devolvió respuesta vacía (HTTP {resp.status_code})"
+        )
+
+    try:
+        data = resp.json()
+    except Exception:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Langflow devolvió respuesta no-JSON (HTTP {resp.status_code}): {resp.text[:500]}"
+        )
 
     try:
         outputs = data["outputs"][0]["outputs"]
