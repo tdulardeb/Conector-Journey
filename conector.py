@@ -59,7 +59,7 @@ def _call_langflow(flow_url: str, api_key: str, payload: dict) -> JSONResponse:
             clean = clean.rsplit("```", 1)[0].strip()
 
         parsed = json.loads(clean)
-        return JSONResponse(content=parsed["response"][0], status_code=200)
+        return JSONResponse(content=parsed["response"], status_code=200)
 
     except Exception as e:
         raise HTTPException(
