@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 import os
-
+import json
 load_dotenv()
 
 app = FastAPI()
@@ -16,15 +16,10 @@ LANGFLOW_FIXED_API_KEY = os.getenv("LANGFLOW_FIXED_API_KEY")
 
 def _call_langflow(flow_url: str, api_key: str, payload: dict) -> JSONResponse:
     body = {
-        "input_value": "trigger",
+        "input_value": json.dumps(payload),
         "output_type": "chat",
         "input_type": "chat",
-        "tweaks": {
-            "Mock Buscar Cliente por Pantalla": {
-                "payload": payload,
-                "nombre_mock": "Nicolas Ferreyra"
-            }
-        }
+        "tweaks": {}
     }
 
     resp = requests.post(
@@ -56,21 +51,24 @@ def _call_langflow(flow_url: str, api_key: str, payload: dict) -> JSONResponse:
         )
 
     try:
-        outputs = data["outputs"][0]["outputs"]
-        raw = None
+        text = data["outputs"][0]["outputs"][0]["results"]["message"]["text"]
 
-        for item in outputs:
-            if item.get("name") == "raw_json":
-                raw = item["results"]["data"]["response"]
-                break
+        clean = text.strip()
+        if clean.startswith("```"):
+            clean = clean.split("\n", 1)[-1]
+            clean = clean.rsplit("```", 1)[0].strip()
 
-        if raw is None:
-            raise ValueError("No se encontró raw_json en la respuesta de Langflow")
-
-        return JSONResponse(content=raw, status_code=200)
+        parsed = json.loads(clean)
+        return JSONResponse(content=parsed["response"][0], status_code=200)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"No pude extraer el JSON crudo: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": f"No pude extraer el texto de Langflow: {e}",
+                "langflow_response": data
+            }
+        )
 
 
 @app.post("/crm/customer")
@@ -78,6 +76,13 @@ def crm_customer(payload: dict):
     url = f"{LANGFLOW_BASE_URL}/{LANGFLOW_FIXED_FLOW_ID}"
     return _call_langflow(url, LANGFLOW_FIXED_API_KEY, payload)
 
+@app.get("/conector/health")
+def health():
+    return {"status": "ok"}
+
+@app.get("/conector/health/v2")
+def health():
+    return {"status": "ok"}
 
 @app.post("/conector/{flow_id}/{apikey}")
 def conector_dynamic(flow_id: str, apikey: str, payload: dict):
