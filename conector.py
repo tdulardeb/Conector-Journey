@@ -32,6 +32,7 @@ def _call_langflow(flow_url: str, api_key: str, payload: dict) -> JSONResponse:
         headers={
             "Content-Type": "application/json",
             "x-api-key": api_key,
+            "origin": "debq2.debmedia.com"
         },
         json=body,
         timeout=30,
